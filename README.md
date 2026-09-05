@@ -71,9 +71,15 @@ aoyu-toolbox/
 └─ icons/              # PWA 圖示
 ```
 ## 比比拉布6767
+### 備注
 以上由ai生成 (包含兌換代碼)
 
 舊版請至https://github.com/qene-fish-master/Qene-music-and-toolbox
 
 此版本網址https://qene-fish-master.github.io/Qene-Music-toolbox/
+
+### 更新紀錄
+v1.0.0舊版
+
+v1.1.0更新了商店 之後還想要更新商店兌換代碼 ai給的代碼 我不是很喜歡
 
