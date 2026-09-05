@@ -17,8 +17,6 @@
 
 已解鎖紀錄存在瀏覽器的 localStorage，同一台裝置下次再開不用重新輸入代碼。
 
-> ⚠️ 這是純前端的「趣味代碼鎖」，代碼直接寫在 `js/store.js` 裡，適合自用或分享給朋友的兌換小遊戲，**不是**真正的付費或安全機制（懂技術的人打開原始碼就看得到代碼）。想換代碼，直接編輯 `js/store.js` 裡 `STORE_ITEMS` 每個項目的 `code` 欄位即可。
-
 目前上架的 6 個工具與代碼：
 
 | 工具 | 說明 | 代碼 |
@@ -37,26 +35,6 @@
 
 ### 📝 隨手記
 簡單的文字筆記，存在瀏覽器的 localStorage。
-
-## 如何使用
-
-1. 解壓縮這個 zip
-2. 這是純前端專案（沒有後端），需要用**本機伺服器**開啟（不能直接雙擊 index.html，否則 Service Worker／IndexedDB 可能無法正常運作）：
-
-   ```bash
-   # 在專案資料夾內執行，任選一種
-   python3 -m http.server 8080
-   # 或
-   npx serve .
-   ```
-
-   然後用瀏覽器開啟 `http://localhost:8080`
-
-3. 想安裝成 App：在瀏覽器選單點「加入主畫面」或網址列的安裝圖示即可。
-
-## 部署到正式環境
-
-把整個資料夾放到任何支援 HTTPS 的靜態網站託管（GitHub Pages、Vercel、Netlify、Cloudflare Pages 都可以）即可。**PWA 的 Service Worker 與部分背景播放特性需要 HTTPS（或 localhost）才能運作**。
 
 ## 技術重點 / 已知限制
 
@@ -92,3 +70,5 @@ aoyu-toolbox/
 │  └─ store.js         # 工具商店邏輯（代碼清單在這裡）
 └─ icons/              # PWA 圖示
 ```
+## 比比拉布6767
+以上由ai生成 (包含兌換代碼)
