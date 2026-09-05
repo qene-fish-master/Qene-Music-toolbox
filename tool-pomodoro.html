@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>番茄鐘 · 青魚工具箱</title>
+<style>
+  :root{ --deep:#0A1F2B; --panel:#123B4D; --panel2:#164B60; --teal:#2E8B95; --seafoam:#7FD8C4; --coral:#FF8A5B; --foam:#EAF4F4; --dim:#A9C6C6; --line:rgba(127,216,196,0.18); }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 20% -10%,#1B5468,transparent 55%),var(--deep);color:var(--foam);font-family:-apple-system,BlinkMacSystemFont,'Noto Sans TC',sans-serif;display:flex;justify-content:center}
+  .wrap{max-width:420px;width:100%;padding:28px 20px 60px}
+  h1{font-size:1.3rem;margin:0 0 4px}
+  .sub{font-size:0.82rem;color:var(--dim);margin-bottom:22px}
+  .panel{border-radius:22px;background:linear-gradient(160deg,rgba(22,75,96,0.5),rgba(10,31,43,0.4));border:1px solid var(--line);padding:22px;box-shadow:0 18px 40px rgba(4,14,20,0.45);text-align:center}
+  .mode{font-size:0.85rem;color:var(--seafoam);font-weight:600;letter-spacing:0.05em;margin-bottom:6px}
+  .display{font-size:3.6rem;font-weight:700;font-variant-numeric:tabular-nums;margin:6px 0 14px}
+  .cycles{font-size:0.78rem;color:var(--dim);margin-bottom:18px}
+  .row{display:flex;gap:12px;justify-content:center;margin-bottom:18px;flex-wrap:wrap}
+  .row label{font-size:0.78rem;color:var(--dim);display:flex;flex-direction:column;gap:4px}
+  .row input{width:70px;text-align:center;background:rgba(10,31,43,0.5);border:1px solid var(--line);border-radius:10px;color:var(--foam);padding:8px;font-size:0.9rem}
+  .controls{display:flex;gap:14px;justify-content:center}
+  button{border:none;cursor:pointer;font-family:inherit}
+  .ctrl{width:56px;height:56px;border-radius:50%;background:rgba(127,216,196,0.1);color:var(--foam);display:flex;align-items:center;justify-content:center;font-size:20px}
+  .ctrl.play{width:70px;height:70px;background:linear-gradient(160deg,var(--seafoam),var(--teal));color:#06222B;font-size:26px}
+  .back{display:inline-block;margin-top:20px;font-size:0.8rem;color:var(--dim);text-decoration:none}
+  .foot{margin-top:26px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🍅 番茄鐘</h1>
+  <div class="sub">青魚工具箱 · 專注 25 分鐘，休息 5 分鐘</div>
+
+  <div class="panel">
+    <div class="mode" id="modeLabel">專注時間</div>
+    <div class="display" id="display">25:00</div>
+    <div class="cycles" id="cycles">已完成 0 個番茄鐘</div>
+
+    <div class="row">
+      <label>專注(分)<input type="number" id="workMin" value="25" min="1" max="90"></label>
+      <label>休息(分)<input type="number" id="breakMin" value="5" min="1" max="30"></label>
+    </div>
+
+    <div class="controls">
+      <button class="ctrl" id="resetBtn">↺</button>
+      <button class="ctrl play" id="startBtn">▶</button>
+      <button class="ctrl" id="skipBtn">⏭</button>
+    </div>
+  </div>
+
+  <div class="foot"><a class="back" href="./index.html">← 回到青魚工具箱</a></div>
+</div>
+
+<script>
+(() => {
+  const display = document.getElementById('display');
+  const modeLabel = document.getElementById('modeLabel');
+  const cyclesEl = document.getElementById('cycles');
+  const workMin = document.getElementById('workMin');
+  const breakMin = document.getElementById('breakMin');
+  const startBtn = document.getElementById('startBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const skipBtn = document.getElementById('skipBtn');
+
+  let isWork = true;
+  let remaining = Number(workMin.value) * 60;
+  let running = false;
+  let raf = null, lastTs = 0;
+  let completed = 0;
+
+  function render(){
+    const m = Math.floor(remaining/60), s = remaining%60;
+    display.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    modeLabel.textContent = isWork ? '專注時間' : '休息時間';
+    cyclesEl.textContent = `已完成 ${completed} 個番茄鐘`;
+  }
+  function tick(ts){
+    if(!running) return;
+    if(!lastTs) lastTs = ts;
+    if(ts - lastTs >= 1000){
+      lastTs = ts;
+      remaining = Math.max(0, remaining-1);
+      render();
+      if(remaining === 0){ switchMode(true); return; }
+    }
+    raf = requestAnimationFrame(tick);
+  }
+  function switchMode(natural){
+    if(isWork && natural) completed++;
+    isWork = !isWork;
+    remaining = (isWork ? Number(workMin.value) : Number(breakMin.value)) * 60;
+    render();
+    if(natural){ beep(); if(navigator.vibrate) navigator.vibrate([200,100,200]); }
+  }
+  startBtn.addEventListener('click', () => {
+    running = !running;
+    startBtn.textContent = running ? '❚❚' : '▶';
+    if(running){ lastTs = 0; raf = requestAnimationFrame(tick); }
+    else cancelAnimationFrame(raf);
+  });
+  resetBtn.addEventListener('click', () => {
+    running = false; startBtn.textContent = '▶'; cancelAnimationFrame(raf);
+    isWork = true; completed = 0;
+    remaining = Number(workMin.value) * 60;
+    render();
+  });
+  skipBtn.addEventListener('click', () => switchMode(false));
+  [workMin, breakMin].forEach(el => el.addEventListener('change', () => {
+    if(!running){ remaining = (isWork ? Number(workMin.value) : Number(breakMin.value)) * 60; render(); }
+  }));
+
+  let ctx;
+  function beep(){
+    try{
+      ctx = ctx || new (window.AudioContext||window.webkitAudioContext)();
+      const now = ctx.currentTime;
+      [0,0.35,0.7].forEach((off,i)=>{
+        const osc=ctx.createOscillator(), gain=ctx.createGain();
+        osc.type='sine'; osc.frequency.value = i===2?880:660;
+        gain.gain.setValueAtTime(0.0001, now+off);
+        gain.gain.exponentialRampToValueAtTime(0.3, now+off+0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now+off+0.28);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(now+off); osc.stop(now+off+0.3);
+      });
+    }catch(e){}
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>

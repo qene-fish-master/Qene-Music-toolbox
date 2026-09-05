@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>單位換算器 · 青魚工具箱</title>
+<style>
+  :root{ --deep:#0A1F2B; --teal:#2E8B95; --seafoam:#7FD8C4; --foam:#EAF4F4; --dim:#A9C6C6; --line:rgba(127,216,196,0.18); }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 20% -10%,#1B5468,transparent 55%),var(--deep);color:var(--foam);font-family:-apple-system,BlinkMacSystemFont,'Noto Sans TC',sans-serif;display:flex;justify-content:center}
+  .wrap{max-width:420px;width:100%;padding:28px 20px 60px}
+  h1{font-size:1.3rem;margin:0 0 4px}
+  .sub{font-size:0.82rem;color:var(--dim);margin-bottom:22px}
+  .panel{border-radius:22px;background:linear-gradient(160deg,rgba(22,75,96,0.5),rgba(10,31,43,0.4));border:1px solid var(--line);padding:22px;box-shadow:0 18px 40px rgba(4,14,20,0.45)}
+  .segment{display:flex;background:rgba(10,31,43,0.55);border-radius:999px;padding:4px;border:1px solid var(--line);gap:4px;margin-bottom:20px}
+  .segment button{flex:1;border:none;background:transparent;color:var(--dim);padding:9px 4px;border-radius:999px;font-size:0.82rem;font-weight:600;cursor:pointer}
+  .segment button.active{background:linear-gradient(160deg,var(--seafoam),var(--teal));color:#06222B}
+  .field{margin-bottom:14px}
+  .field label{font-size:0.78rem;color:var(--dim);display:block;margin-bottom:6px}
+  .field-row{display:flex;gap:8px}
+  .field-row input{flex:1;background:rgba(10,31,43,0.5);border:1px solid var(--line);border-radius:12px;color:var(--foam);padding:12px;font-size:1rem}
+  .field-row select{background:rgba(10,31,43,0.5);border:1px solid var(--line);border-radius:12px;color:var(--foam);padding:12px;font-size:0.9rem}
+  .swap{display:flex;justify-content:center;margin:6px 0}
+  .swap button{border:none;background:rgba(127,216,196,0.12);color:var(--foam);width:36px;height:36px;border-radius:50%;font-size:16px;cursor:pointer}
+  .result{text-align:center;font-size:1.5rem;font-weight:700;color:var(--seafoam);margin-top:14px}
+  .back{display:block;text-align:center;margin-top:20px;font-size:0.8rem;color:var(--dim);text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>📏 單位換算器</h1>
+  <div class="sub">青魚工具箱 · 長度、重量、溫度即時換算</div>
+
+  <div class="panel">
+    <div class="segment" id="catSwitch">
+      <button data-cat="length" class="active">長度</button>
+      <button data-cat="weight">重量</button>
+      <button data-cat="temp">溫度</button>
+    </div>
+
+    <div class="field">
+      <label>從</label>
+      <div class="field-row">
+        <input type="number" id="fromVal" value="1">
+        <select id="fromUnit"></select>
+      </div>
+    </div>
+
+    <div class="swap"><button id="swapBtn">⇅</button></div>
+
+    <div class="field">
+      <label>到</label>
+      <div class="field-row">
+        <input type="number" id="toVal" value="" readonly>
+        <select id="toUnit"></select>
+      </div>
+    </div>
+
+    <div class="result" id="resultLine"></div>
+  </div>
+
+  <a class="back" href="./index.html">← 回到青魚工具箱</a>
+</div>
+
+<script>
+(() => {
+  const UNITS = {
+    length: {
+      base: 'm',
+      list: { mm:0.001, cm:0.01, m:1, km:1000, inch:0.0254, ft:0.3048, mile:1609.344 },
+      labels: { mm:'毫米', cm:'公分', m:'公尺', km:'公里', inch:'英吋', ft:'英尺', mile:'英里' },
+    },
+    weight: {
+      base: 'kg',
+      list: { g:0.001, kg:1, ton:1000, oz:0.0283495, lb:0.45359237 },
+      labels: { g:'公克', kg:'公斤', ton:'公噸', oz:'盎司', lb:'磅' },
+    },
+    temp: {
+      base: 'c',
+      list: { c:1, f:1, k:1 }, // 溫度用特殊轉換，不用比例
+      labels: { c:'攝氏 °C', f:'華氏 °F', k:'克氏 K' },
+    },
+  };
+
+  let cat = 'length';
+  const catSwitch = document.getElementById('catSwitch');
+  const fromVal = document.getElementById('fromVal');
+  const toVal = document.getElementById('toVal');
+  const fromUnit = document.getElementById('fromUnit');
+  const toUnit = document.getElementById('toUnit');
+  const resultLine = document.getElementById('resultLine');
+  const swapBtn = document.getElementById('swapBtn');
+
+  function populate(){
+    const def = UNITS[cat];
+    const keys = Object.keys(def.list);
+    [fromUnit, toUnit].forEach((sel, i) => {
+      sel.innerHTML = keys.map(k => `<option value="${k}">${def.labels[k]}</option>`).join('');
+      sel.value = keys[i === 0 ? 0 : 1];
+    });
+  }
+
+  function toBase(value, unit){
+    if(cat === 'temp'){
+      if(unit === 'c') return value;
+      if(unit === 'f') return (value - 32) * 5/9;
+      if(unit === 'k') return value - 273.15;
+    }
+    return value * UNITS[cat].list[unit];
+  }
+  function fromBase(value, unit){
+    if(cat === 'temp'){
+      if(unit === 'c') return value;
+      if(unit === 'f') return value * 9/5 + 32;
+      if(unit === 'k') return value + 273.15;
+    }
+    return value / UNITS[cat].list[unit];
+  }
+
+  function convert(){
+    const v = Number(fromVal.value);
+    if(isNaN(v)){ toVal.value = ''; resultLine.textContent = ''; return; }
+    const base = toBase(v, fromUnit.value);
+    const out = fromBase(base, toUnit.value);
+    const rounded = Math.round(out * 10000) / 10000;
+    toVal.value = rounded;
+    resultLine.textContent = `${v} ${UNITS[cat].labels[fromUnit.value]} = ${rounded} ${UNITS[cat].labels[toUnit.value]}`;
+  }
+
+  catSwitch.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-cat]');
+    if(!btn) return;
+    [...catSwitch.children].forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    cat = btn.dataset.cat;
+    populate();
+    convert();
+  });
+
+  [fromVal, fromUnit, toUnit].forEach(el => el.addEventListener('input', convert));
+
+  swapBtn.addEventListener('click', () => {
+    const tmp = fromUnit.value;
+    fromUnit.value = toUnit.value;
+    toUnit.value = tmp;
+    convert();
+  });
+
+  populate();
+  convert();
+})();
+</script>
+</body>
+</html>

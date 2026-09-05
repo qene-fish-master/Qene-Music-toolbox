@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>工具商店 · 青魚工具箱</title>
+<meta name="theme-color" content="#0A1F2B">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icons/icon-192.png">
+<link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+<div class="tide"></div>
+<div class="shell">
+
+  <div class="topbar">
+    <a class="back" href="./index.html" aria-label="返回首頁">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </a>
+    <div>
+      <h1>工具商店</h1>
+      <div class="sub">輸入專屬代碼，解鎖後即可下載小工具</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>怎麼用？</h2>
+    <div class="hint">每個小工具都是獨立的單一檔案，輸入正確代碼解鎖後會出現「下載工具」按鈕，下載下來的 HTML 檔可以直接雙擊開啟使用，不需要安裝任何東西。代碼不分大小寫。</div>
+  </div>
+
+  <div class="store-grid" id="storeGrid"></div>
+
+  <div class="panel" style="margin-top:6px">
+    <div class="hint">已解鎖的紀錄存在這台裝置的瀏覽器裡。<button id="resetUnlock" type="button" style="background:none;border:none;color:var(--coral);text-decoration:underline;padding:0;font-size:0.8rem;cursor:pointer">清除已解鎖清單</button></div>
+  </div>
+
+</div>
+
+<nav class="bottom-nav">
+  <div class="inner">
+    <a href="./index.html"><span class="ic">🏠</span>首頁</a>
+    <a href="./player.html"><span class="ic">🎧</span>播放器</a>
+    <a href="./timer.html"><span class="ic">⏱️</span>計時器</a>
+    <a href="./notes.html"><span class="ic">📝</span>隨手記</a>
+    <a href="./store.html" class="active"><span class="ic">🛍️</span>商店</a>
+  </div>
+</nav>
+
+<script src="./js/app.js"></script>
+<script src="./js/store.js"></script>
+</body>
+</html>

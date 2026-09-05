@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>骰子＆抽籤 · 青魚工具箱</title>
+<style>
+  :root{ --deep:#0A1F2B; --teal:#2E8B95; --seafoam:#7FD8C4; --coral:#FF8A5B; --foam:#EAF4F4; --dim:#A9C6C6; --line:rgba(127,216,196,0.18); }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 20% -10%,#1B5468,transparent 55%),var(--deep);color:var(--foam);font-family:-apple-system,BlinkMacSystemFont,'Noto Sans TC',sans-serif;display:flex;justify-content:center}
+  .wrap{max-width:420px;width:100%;padding:28px 20px 60px}
+  h1{font-size:1.3rem;margin:0 0 4px}
+  .sub{font-size:0.82rem;color:var(--dim);margin-bottom:22px}
+  .panel{border-radius:22px;background:linear-gradient(160deg,rgba(22,75,96,0.5),rgba(10,31,43,0.4));border:1px solid var(--line);padding:22px;box-shadow:0 18px 40px rgba(4,14,20,0.45);margin-bottom:16px}
+  .panel h2{font-size:1rem;margin:0 0 12px}
+  .segment{display:flex;background:rgba(10,31,43,0.55);border-radius:999px;padding:4px;border:1px solid var(--line);gap:4px;margin-bottom:18px}
+  .segment button{flex:1;border:none;background:transparent;color:var(--dim);padding:9px;border-radius:999px;font-size:0.85rem;font-weight:600;cursor:pointer}
+  .segment button.active{background:linear-gradient(160deg,var(--seafoam),var(--teal));color:#06222B}
+  .dice-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:16px;min-height:60px}
+  .die{width:56px;height:56px;border-radius:14px;background:var(--foam);color:var(--deep);display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-weight:700}
+  .row{display:flex;gap:10px;justify-content:center;align-items:center;margin-bottom:14px}
+  .row label{font-size:0.8rem;color:var(--dim)}
+  .row input{width:60px;text-align:center;background:rgba(10,31,43,0.5);border:1px solid var(--line);border-radius:10px;color:var(--foam);padding:8px}
+  textarea{width:100%;min-height:110px;background:rgba(10,31,43,0.5);border:1px solid var(--line);border-radius:14px;color:var(--foam);padding:12px;font-family:inherit;font-size:0.88rem}
+  .result{text-align:center;font-size:1.4rem;font-weight:700;margin:14px 0;min-height:1.6em;color:var(--seafoam)}
+  .btn{display:block;width:100%;border:none;padding:13px;border-radius:999px;background:linear-gradient(160deg,var(--seafoam),var(--teal));color:#06222B;font-weight:700;font-size:0.95rem;cursor:pointer}
+  .back{display:block;text-align:center;margin-top:20px;font-size:0.8rem;color:var(--dim);text-decoration:none}
+  .tab{display:none}
+  .tab.active{display:block}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🎲 骰子＆抽籤</h1>
+  <div class="sub">青魚工具箱 · 決定不了就交給它</div>
+
+  <div class="segment" id="tabSwitch">
+    <button data-tab="dice" class="active">擲骰子</button>
+    <button data-tab="pick">抽籤／抽名單</button>
+  </div>
+
+  <div class="panel tab active" id="tabDice">
+    <div class="row">
+      <label>骰子數量</label>
+      <input type="number" id="diceCount" value="2" min="1" max="8">
+    </div>
+    <div class="dice-row" id="diceRow"></div>
+    <button class="btn" id="rollBtn">擲骰子</button>
+  </div>
+
+  <div class="panel tab" id="tabPick">
+    <textarea id="pickList" placeholder="一行一個名字或選項，例如：&#10;小明&#10;小華&#10;小美"></textarea>
+    <div class="result" id="pickResult"></div>
+    <button class="btn" id="pickBtn">幫我抽一個</button>
+  </div>
+
+  <a class="back" href="./index.html">← 回到青魚工具箱</a>
+</div>
+
+<script>
+(() => {
+  const tabButtons = document.querySelectorAll('#tabSwitch button');
+  const tabDice = document.getElementById('tabDice');
+  const tabPick = document.getElementById('tabPick');
+  tabButtons.forEach(b => b.addEventListener('click', () => {
+    tabButtons.forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    const t = b.dataset.tab;
+    tabDice.classList.toggle('active', t === 'dice');
+    tabPick.classList.toggle('active', t === 'pick');
+  }));
+
+  const diceCount = document.getElementById('diceCount');
+  const diceRow = document.getElementById('diceRow');
+  const rollBtn = document.getElementById('rollBtn');
+
+  function renderDice(values){
+    diceRow.innerHTML = '';
+    values.forEach(v => {
+      const d = document.createElement('div');
+      d.className = 'die';
+      d.textContent = v;
+      diceRow.appendChild(d);
+    });
+  }
+  rollBtn.addEventListener('click', () => {
+    const n = Math.min(8, Math.max(1, Number(diceCount.value) || 1));
+    const values = Array.from({length:n}, () => 1 + Math.floor(Math.random()*6));
+    renderDice(values);
+  });
+  renderDice([1,1]);
+
+  const pickList = document.getElementById('pickList');
+  const pickResult = document.getElementById('pickResult');
+  const pickBtn = document.getElementById('pickBtn');
+  pickBtn.addEventListener('click', () => {
+    const items = pickList.value.split('\n').map(s => s.trim()).filter(Boolean);
+    if(items.length === 0){ pickResult.textContent = '先輸入幾個選項吧'; return; }
+    const pick = items[Math.floor(Math.random()*items.length)];
+    pickResult.textContent = '🎉 ' + pick;
+  });
+})();
+</script>
+</body>
+</html>

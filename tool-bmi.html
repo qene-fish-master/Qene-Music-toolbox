@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BMI 小算盤 · 青魚工具箱</title>
+<style>
+  :root{ --deep:#0A1F2B; --teal:#2E8B95; --seafoam:#7FD8C4; --coral:#FF8A5B; --foam:#EAF4F4; --dim:#A9C6C6; --line:rgba(127,216,196,0.18); }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 20% -10%,#1B5468,transparent 55%),var(--deep);color:var(--foam);font-family:-apple-system,BlinkMacSystemFont,'Noto Sans TC',sans-serif;display:flex;justify-content:center}
+  .wrap{max-width:420px;width:100%;padding:28px 20px 60px}
+  h1{font-size:1.3rem;margin:0 0 4px}
+  .sub{font-size:0.82rem;color:var(--dim);margin-bottom:22px}
+  .panel{border-radius:22px;background:linear-gradient(160deg,rgba(22,75,96,0.5),rgba(10,31,43,0.4));border:1px solid var(--line);padding:22px;box-shadow:0 18px 40px rgba(4,14,20,0.45)}
+  .field{margin-bottom:16px}
+  .field label{font-size:0.82rem;color:var(--dim);display:block;margin-bottom:6px}
+  .field input{width:100%;background:rgba(10,31,43,0.5);border:1px solid var(--line);border-radius:12px;color:var(--foam);padding:12px;font-size:1rem}
+  .bmi-num{text-align:center;font-size:2.6rem;font-weight:700;margin:16px 0 4px}
+  .bmi-cat{text-align:center;font-size:0.95rem;font-weight:600;margin-bottom:16px}
+  .bar{height:10px;border-radius:6px;background:linear-gradient(90deg,#5FA8E0 0%,#7FD8C4 30%,#FFD36E 55%,#FF8A5B 75%,#FF5B5B 100%);position:relative;margin-bottom:8px}
+  .bar .marker{position:absolute;top:-5px;width:4px;height:20px;background:var(--foam);border-radius:2px;transform:translateX(-50%)}
+  .scale{display:flex;justify-content:space-between;font-size:0.68rem;color:var(--dim)}
+  .hint{font-size:0.76rem;color:var(--dim);text-align:center;margin-top:16px;line-height:1.5}
+  .back{display:block;text-align:center;margin-top:20px;font-size:0.8rem;color:var(--dim);text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>⚖️ BMI 小算盤</h1>
+  <div class="sub">青魚工具箱 · 輸入身高體重，看看落在哪個區間</div>
+
+  <div class="panel">
+    <div class="field">
+      <label>身高（公分）</label>
+      <input type="number" id="height" value="170" min="80" max="250">
+    </div>
+    <div class="field">
+      <label>體重（公斤）</label>
+      <input type="number" id="weight" value="60" min="20" max="300">
+    </div>
+
+    <div class="bmi-num" id="bmiNum">--</div>
+    <div class="bmi-cat" id="bmiCat">請輸入身高體重</div>
+
+    <div class="bar"><div class="marker" id="marker" style="left:0%"></div></div>
+    <div class="scale"><span>過輕</span><span>正常</span><span>過重</span><span>肥胖</span></div>
+
+    <div class="hint">BMI 僅供參考，無法反映肌肉量、體脂率等個別差異，實際健康狀況建議諮詢醫療專業人員。</div>
+  </div>
+
+  <a class="back" href="./index.html">← 回到青魚工具箱</a>
+</div>
+
+<script>
+(() => {
+  const height = document.getElementById('height');
+  const weight = document.getElementById('weight');
+  const bmiNum = document.getElementById('bmiNum');
+  const bmiCat = document.getElementById('bmiCat');
+  const marker = document.getElementById('marker');
+
+  function categorize(bmi){
+    if(bmi < 18.5) return { text:'過輕', color:'#5FA8E0', pct: (bmi/18.5)*20 };
+    if(bmi < 24)   return { text:'正常', color:'#7FD8C4', pct: 20 + ((bmi-18.5)/(24-18.5))*30 };
+    if(bmi < 27)   return { text:'過重', color:'#FFD36E', pct: 50 + ((bmi-24)/(27-24))*20 };
+    if(bmi < 30)   return { text:'輕度肥胖', color:'#FF8A5B', pct: 70 + ((bmi-27)/(30-27))*15 };
+    return { text:'中重度肥胖', color:'#FF5B5B', pct: Math.min(100, 85 + ((bmi-30)/10)*15) };
+  }
+
+  function compute(){
+    const h = Number(height.value) / 100;
+    const w = Number(weight.value);
+    if(!h || !w){ bmiNum.textContent = '--'; bmiCat.textContent = '請輸入身高體重'; marker.style.left = '0%'; return; }
+    const bmi = w / (h*h);
+    const cat = categorize(bmi);
+    bmiNum.textContent = bmi.toFixed(1);
+    bmiNum.style.color = cat.color;
+    bmiCat.textContent = cat.text;
+    bmiCat.style.color = cat.color;
+    marker.style.left = Math.min(100, Math.max(0, cat.pct)) + '%';
+  }
+
+  [height, weight].forEach(el => el.addEventListener('input', compute));
+  compute();
+})();
+</script>
+</body>
+</html>

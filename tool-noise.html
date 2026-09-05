@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>海浪白噪音 · 青魚工具箱</title>
+<style>
+  :root{ --deep:#0A1F2B; --teal:#2E8B95; --seafoam:#7FD8C4; --foam:#EAF4F4; --dim:#A9C6C6; --line:rgba(127,216,196,0.18); }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 20% -10%,#1B5468,transparent 55%),var(--deep);color:var(--foam);font-family:-apple-system,BlinkMacSystemFont,'Noto Sans TC',sans-serif;display:flex;justify-content:center}
+  .wrap{max-width:420px;width:100%;padding:28px 20px 60px}
+  h1{font-size:1.3rem;margin:0 0 4px}
+  .sub{font-size:0.82rem;color:var(--dim);margin-bottom:22px}
+  .panel{border-radius:22px;background:linear-gradient(160deg,rgba(22,75,96,0.5),rgba(10,31,43,0.4));border:1px solid var(--line);padding:22px;box-shadow:0 18px 40px rgba(4,14,20,0.45)}
+  .sounds{display:flex;flex-direction:column;gap:10px;margin-bottom:18px}
+  .sound-row{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:14px;background:rgba(10,31,43,0.4);border:1px solid transparent}
+  .sound-row.active{border-color:rgba(127,216,196,0.4);background:rgba(127,216,196,0.08)}
+  .sound-row .icon{font-size:20px;width:30px;text-align:center}
+  .sound-row .name{flex:1;font-size:0.9rem}
+  .sound-row button{border:none;width:36px;height:36px;border-radius:50%;background:rgba(127,216,196,0.12);color:var(--foam);cursor:pointer;font-size:14px}
+  .sound-row.active button{background:linear-gradient(160deg,var(--seafoam),var(--teal));color:#06222B}
+  .vol-row{display:flex;align-items:center;gap:10px;margin-top:10px}
+  .vol-row input{flex:1}
+  .back{display:block;text-align:center;margin-top:24px;font-size:0.8rem;color:var(--dim);text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🌊 海浪白噪音</h1>
+  <div class="sub">青魚工具箱 · 可同時混合多種音效，專注或入睡都好用</div>
+
+  <div class="panel">
+    <div class="sounds" id="sounds"></div>
+    <div class="vol-row">
+      <span>🔈</span>
+      <input type="range" id="masterVol" min="0" max="1" step="0.01" value="0.6">
+      <span>🔊</span>
+    </div>
+  </div>
+
+  <a class="back" href="./index.html">← 回到青魚工具箱</a>
+</div>
+
+<script>
+(() => {
+  const SOUND_DEFS = [
+    { id:'white', icon:'❄️', name:'白噪音', type:'white' },
+    { id:'pink',  icon:'🌸', name:'粉紅噪音', type:'pink' },
+    { id:'wave',  icon:'🌊', name:'海浪聲', type:'wave' },
+    { id:'rain',  icon:'🌧️', name:'雨聲', type:'rain' },
+  ];
+
+  const container = document.getElementById('sounds');
+  const masterVol = document.getElementById('masterVol');
+  let ctx = null;
+  const nodes = {}; // id -> {source, gain, lfo}
+
+  function ensureCtx(){
+    if(!ctx) ctx = new (window.AudioContext||window.webkitAudioContext)();
+    return ctx;
+  }
+
+  function makeNoiseBuffer(kind){
+    const c = ensureCtx();
+    const len = c.sampleRate * 2;
+    const buf = c.createBuffer(1, len, c.sampleRate);
+    const data = buf.getChannelData(0);
+    let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
+    for(let i=0;i<len;i++){
+      const white = Math.random()*2-1;
+      if(kind === 'pink' || kind === 'rain'){
+        b0 = 0.99886*b0 + white*0.0555179;
+        b1 = 0.99332*b1 + white*0.0750759;
+        b2 = 0.96900*b2 + white*0.1538520;
+        b3 = 0.86650*b3 + white*0.3104856;
+        b4 = 0.55000*b4 + white*0.5329522;
+        b5 = -0.7616*b5 - white*0.0168980;
+        data[i] = (b0+b1+b2+b3+b4+b5+b6+white*0.5362)*0.11;
+        b6 = white*0.115926;
+      } else {
+        data[i] = white;
+      }
+    }
+    return buf;
+  }
+
+  function startSound(def){
+    const c = ensureCtx();
+    const gain = c.createGain();
+    gain.gain.value = 0;
+    gain.connect(c.destination);
+
+    const src = c.createBufferSource();
+    src.buffer = makeNoiseBuffer(def.type === 'wave' ? 'white' : def.type);
+    src.loop = true;
+
+    let filter = null;
+    if(def.type === 'wave'){
+      filter = c.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 500;
+      src.connect(filter).connect(gain);
+      // LFO 模擬海浪起伏
+      const lfo = c.createOscillator();
+      const lfoGain = c.createGain();
+      lfo.frequency.value = 0.12;
+      lfoGain.gain.value = 220;
+      lfo.connect(lfoGain).connect(filter.frequency);
+      lfo.start();
+      nodes[def.id] = { src, gain, lfo };
+    } else if(def.type === 'rain'){
+      filter = c.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.value = 1200;
+      src.connect(filter).connect(gain);
+      nodes[def.id] = { src, gain };
+    } else {
+      src.connect(gain);
+      nodes[def.id] = { src, gain };
+    }
+    src.start();
+    gain.gain.linearRampToValueAtTime(Number(masterVol.value), c.currentTime + 0.6);
+  }
+
+  function stopSound(id){
+    const n = nodes[id];
+    if(!n) return;
+    const c = ensureCtx();
+    n.gain.gain.linearRampToValueAtTime(0, c.currentTime + 0.4);
+    setTimeout(() => {
+      try{ n.src.stop(); }catch(e){}
+      if(n.lfo){ try{ n.lfo.stop(); }catch(e){} }
+    }, 450);
+    delete nodes[id];
+  }
+
+  function render(){
+    container.innerHTML = '';
+    SOUND_DEFS.forEach(def => {
+      const active = !!nodes[def.id];
+      const row = document.createElement('div');
+      row.className = 'sound-row' + (active ? ' active' : '');
+      row.innerHTML = `<div class="icon">${def.icon}</div><div class="name">${def.name}</div><button>${active ? '❚❚' : '▶'}</button>`;
+      row.querySelector('button').addEventListener('click', () => {
+        if(nodes[def.id]) stopSound(def.id);
+        else startSound(def);
+        render();
+      });
+      container.appendChild(row);
+    });
+  }
+
+  masterVol.addEventListener('input', () => {
+    const c = ensureCtx();
+    Object.values(nodes).forEach(n => {
+      n.gain.gain.linearRampToValueAtTime(Number(masterVol.value), c.currentTime + 0.1);
+    });
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
